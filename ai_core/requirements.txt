@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+numpy
+pandas
+scikit-learn
+networkx
+opencv-python
+langgraph
+langchain
+pgmpy
+sympy
