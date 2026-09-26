@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: disaster_management
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  ai_core:
+    build:
+      context: ./ai_core
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - rabbitmq
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://admin:password@db:5432/disaster_management
+      REDIS_URL: redis://redis:6379/0
+      RABBITMQ_URL: amqp://admin:password@rabbitmq:5672/
+      AI_CORE_URL: http://ai_core:8000
+      SECRET_KEY: supersecretkey
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+      - ai_core
+
+volumes:
+  postgres_data:
